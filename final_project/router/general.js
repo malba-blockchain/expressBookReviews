@@ -4,16 +4,46 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
-
-public_users.post("/register", (req,res) => {
-  //Write your code here
-  // Push a new user object into the users array based on query parameters from the request
-  users.push({
-        "username": req.body.username,
-        "password": req.body.password,
+public_users.post("/register", (req, res) => {
+  // Extract username and password from request body
+  const { username, password } = req.body;
+  
+  // Check if username and password are provided
+  const errors = [];
+  
+  if (!username) {
+    errors.push("Username is required");
+  }
+  
+  if (!password) {
+    errors.push("Password is required");
+  }
+  
+  // If any required fields are missing, return error response
+  if (errors.length > 0) {
+    return res.status(400).json({ success: false, errors });
+  }
+  
+  // Check if username already exists
+  const userExists = users.some(user => user.username === username);
+  if (userExists) {
+    return res.status(409).json({ 
+      success: false, 
+      errors: ["Username already exists"]
     });
-  // Send a success message as the response, indicating the user has been added
-  return res.send("The user " + req.body.username + " has been added!");
+  }
+  
+  // If no errors, add the new user
+  users.push({
+    username,
+    password
+  });
+  
+  // Send success response
+  return res.status(201).json({ 
+    success: true, 
+    message: `The user ${username} has been added!`
+  });
 });
 
 // Get the book list available in the shop
